@@ -1,0 +1,31 @@
+###
+POST http://localhost:3000/user/register
+Content-Type: application/json
+
+{
+  "username": "username",
+  "password": "password",
+  "email": "email@email.com"
+}
+
+###
+POST http://localhost:3000/user/login
+Content-Type: application/json
+
+{
+  "email": "email@email.com",
+  "password": "password"
+}
+
+###
+PUT http://localhost:3000/user
+Content-Type: application/json
+
+{
+  "email": "email2@email.com",
+  "bio": "bio",
+  "image": "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fwww.snut.fr%2Fwp-content%2Fuploads%2F2015%2F08%2Fimage-de-paysage.jpg&f=1&nofb=1&ipt=01bcd1f8ac265c3f7737a476e6b5e739dc78dcfd1b5e16fd46ee00fd25a07c23&ipo=images"
+}
+
+###
+http://localhost:3000/user
