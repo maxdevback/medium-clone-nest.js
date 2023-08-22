@@ -133,7 +133,7 @@ $ npm run start:prod
   POST http://localhost:3000/profile/:username/follow
 
 - UnFollow profile
-  DELETE http://localhost:3000/profile/username/unfollow
+  DELETE http://localhost:3000/profile/:username/unfollow
 
 ## Stay in touch
 
