@@ -6,6 +6,7 @@ import {
   Put,
   UseGuards,
   Session,
+  Delete,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { RegisterUserDto } from './dto/register-user.dto';
@@ -65,5 +66,9 @@ export class UserController {
       email: updatedUser.email,
       username: updatedUser.username,
     });
+  }
+  @Delete()
+  async logout(@Session() session: any) {
+    session.user = null;
   }
 }

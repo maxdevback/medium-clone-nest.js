@@ -1,0 +1,36 @@
+###
+POST http://localhost:3000/article
+Content-Type: application/json
+
+{
+  "title": "This is title",
+  "description": "This is description",
+  "body": "This is body"
+}
+
+
+###
+GET http://localhost:3000/article
+
+###
+GET http://localhost:3000/article/this-is-title-n3x1ch
+
+### +
+GET http://localhost:3000/article/feed
+
+###
+POST http://localhost:3000/article/this-is-title-n3x1ch/favorite
+
+###
+DELETE http://localhost:3000/article/this-is-title-n3x1ch/unfavorite
+
+###
+PATCH  http://localhost:3000/article/this-is-title-n3x1ch
+Content-Type: application/json
+
+{
+  "title": "This is title 2"
+}
+
+###
+DELETE http://localhost:3000/article/this-is-title-n3x1ch

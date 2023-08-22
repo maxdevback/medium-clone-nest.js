@@ -4,7 +4,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindManyOptions } from 'typeorm';
 import { Follow } from './entities/follow.entity';
 import { UserService } from 'src/user/user.service';
 
@@ -14,18 +14,21 @@ export class ProfileService {
     @InjectRepository(Follow) private readonly followRepo: Repository<Follow>,
     private readonly userService: UserService,
   ) {}
-  async getProfile(authId: number, profileUsername: string) {
+  async getProfile(profileUsername: string, authId?: number) {
     const profile = await this.userService.findOne({
       where: { username: profileUsername },
     });
     if (!profile)
       throw new NotFoundException('User with that username not found');
-    const follow = await this.followRepo.findOne({
-      where: { followerId: authId, followingId: authId },
-    });
-    return { ...profile, following: !!follow };
+    if (authId) {
+      const follow = await this.followRepo.findOne({
+        where: { followerId: authId, followingId: authId },
+      });
+      return { ...profile, following: !!follow };
+    }
+    return profile;
   }
-  async followUser(authId: number, profileUsername: string) {
+  async followUser(profileUsername: string, authId: number) {
     const profile = await this.userService.findOne({
       where: { username: profileUsername },
     });
@@ -33,7 +36,7 @@ export class ProfileService {
       throw new NotFoundException('User with that username not found');
     if (profile.id === authId)
       throw new ConflictException('Follower and Following cant be equal');
-    const follow = await this.followRepo.find({
+    const follow = await this.followRepo.findOne({
       where: { followerId: authId, followingId: profile.id },
     });
     if (follow)
@@ -44,7 +47,7 @@ export class ProfileService {
     return await this.followRepo.save(newFollow);
   }
 
-  async unFollowUser(authId: number, profileUsername: string) {
+  async unFollowUser(profileUsername: string, authId: number) {
     const profile = await this.userService.findOne({
       where: { username: profileUsername },
     });
@@ -52,11 +55,14 @@ export class ProfileService {
       throw new NotFoundException('User with that username not found');
     if (profile.id === authId)
       throw new ConflictException('Follower and Following cant be equal');
-    const follow = await this.followRepo.find({
+    const follow = await this.followRepo.findOne({
       where: { followerId: authId, followingId: profile.id },
     });
     if (!follow)
       throw new ConflictException("You're not following this profile");
     return await this.followRepo.remove(follow);
+  }
+  async get(where: FindManyOptions<Follow>) {
+    return await this.followRepo.find(where);
   }
 }

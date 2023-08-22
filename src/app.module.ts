@@ -13,6 +13,7 @@ import { ArticleModule } from './article/article.module';
 import { ConfigService, ConfigModule } from '@nestjs/config';
 import { User } from './user/entities/user.entity';
 import { Article } from './article/entities/article.entity';
+import { Follow } from './profile/entities/follow.entity';
 const cookieSession = require('cookie-session');
 
 @Module({
@@ -29,7 +30,7 @@ const cookieSession = require('cookie-session');
         host: configService.get<string>('DB_HOST'),
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
-        entities: [User, Article],
+        entities: [User, Article, Follow],
         synchronize: true,
       }),
     }),

@@ -2,6 +2,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -11,6 +12,7 @@ import { Article } from './entities/article.entity';
 import { UserService } from 'src/user/user.service';
 import slugify from 'slugify';
 import { User } from 'src/user/entities/user.entity';
+import { ProfileService } from 'src/profile/profile.service';
 
 @Injectable()
 export class ArticleService {
@@ -18,6 +20,7 @@ export class ArticleService {
     @InjectRepository(Article)
     private readonly articleRepo: Repository<Article>,
     private readonly userService: UserService,
+    private readonly profileService: ProfileService,
   ) {}
   async create(user: User, createArticleDto: CreateArticleDto) {
     const newArticle = new Article();
@@ -29,10 +32,10 @@ export class ArticleService {
     newArticle.author = user;
     return await this.articleRepo.save(newArticle);
   }
-  async delete(slug: string, userId: number) {
+  async deleteBySlag(slug: string, userId: number) {
     const article = await this.articleRepo.findOne({
       where: { slug },
-      relations: ['user'],
+      relations: ['author'],
     });
     if (!article) throw new NotFoundException('Article with that id not exist');
     if (article.author.id !== userId)
@@ -103,8 +106,73 @@ export class ArticleService {
 
     return { articles: articlesWithFavorited, articlesCount };
   }
-  async getFeed(query: any, userId?: number) {}
+  async getFeed(query: any, userId: number) {
+    const follows = await this.profileService.get({
+      where: { followerId: userId },
+    });
+    if (!follows[0]) return { articles: [], articlesCount: 0 };
+    const followingUserIds = follows.map((follow) => follow.followingId);
+    const queryBuilder = this.articleRepo
+      .createQueryBuilder('articles')
+      .leftJoinAndSelect('articles.author', 'author')
+      .where('articles.authorId IN (:...ids)', { ids: followingUserIds });
 
+    queryBuilder.orderBy('articles.createdAt', 'DESC');
+
+    const articlesCount = await queryBuilder.getCount();
+
+    if (query.limit) {
+      queryBuilder.limit(query.limit);
+    }
+
+    if (query.offset) {
+      queryBuilder.offset(query.offset);
+    }
+
+    const articles = await queryBuilder.getMany();
+
+    return { articles, articlesCount };
+  }
+  async addToFavorite(slug: string, userId: number) {
+    const article = await this.articleRepo.findOne({ where: { slug } });
+    if (!article)
+      throw new NotFoundException('Article with that slag dose not found');
+    const user = await this.userService.findOne({
+      where: { id: userId },
+      relations: ['favorites'],
+    });
+    if (!user) throw new NotFoundException('Something went wrong with auth');
+    const articleInFavorite = user.favorites.filter(
+      (item) => item.id === article.id,
+    );
+    if (articleInFavorite[0])
+      throw new ConflictException(
+        "You're already added this article to favorites",
+      );
+    user.favorites.push(article);
+    article.favoritesCount++;
+    await this.userService.save(user);
+    await this.articleRepo.save(article);
+    return article;
+  }
+  async deleteFromFavorites(slug: string, userId: number) {
+    const article = await this.articleRepo.findOne({ where: { slug } });
+    if (!article)
+      throw new NotFoundException('Article with that slag dose not found');
+    const user = await this.userService.findOne({
+      where: { id: userId },
+      relations: ['favorites'],
+    });
+    if (!user) throw new NotFoundException('Something went wrong with auth');
+    const articlesLength = user.favorites.length;
+    user.favorites = user.favorites.filter((item) => item.id !== article.id);
+    if (articlesLength === user.favorites.length)
+      throw new ConflictException("You're not added this article to favorites");
+    if (article.favoritesCount > 0) article.favoritesCount--;
+    await this.articleRepo.save(article);
+    await this.userService.save(user);
+    return article;
+  }
   _generateSlag(title: string) {
     return (
       slugify(title, { lower: true }) +
@@ -112,8 +180,11 @@ export class ArticleService {
       ((Math.random() * Math.pow(36, 6)) | 0).toString(36)
     );
   }
-  findOne(id: number) {
-    return `This action returns a #${id} article`;
+  async findBySlug(slug: string) {
+    const article = await this.articleRepo.findOne({ where: { slug } });
+    if (!article)
+      throw new NotFoundException('Article with that slag dose not exist');
+    return article;
   }
 
   async update(
@@ -128,9 +199,5 @@ export class ArticleService {
 
     Object.assign(article, updateArticleDto);
     return await this.articleRepo.save(article);
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} article`;
   }
 }

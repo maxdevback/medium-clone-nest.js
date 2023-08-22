@@ -29,14 +29,35 @@ export class ArticleController {
     return await this.articleService.create(user, createArticleDto);
   }
 
-  @Get('')
+  @Get()
   async findAll(@UserDecorator() user: User | undefined, @Query() query: any) {
     return await this.articleService.findAll(query, user.id);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.articleService.findOne(+id);
+  @Get('/feed')
+  @UseGuards(AuthGuard)
+  async getFeed(@UserDecorator() user: User, @Query() query: any) {
+    return await this.articleService.getFeed(query, user.id);
+  }
+  @Get(':slug')
+  async findBySlug(@Param('slug') slug: string) {
+    return await this.articleService.findBySlug(slug);
+  }
+  @Post(':slug/favorite')
+  @UseGuards(AuthGuard)
+  async addToFavorite(
+    @UserDecorator() user: User,
+    @Param('slug') slug: string,
+  ) {
+    return await this.articleService.addToFavorite(slug, user.id);
+  }
+  @Delete(':slag/unfavorite')
+  @UseGuards(AuthGuard)
+  async deleteFromFavorite(
+    @UserDecorator() user: User,
+    @Param('slag') slag: string,
+  ) {
+    return await this.articleService.deleteFromFavorites(slag, user.id);
   }
 
   @Patch(':slug')
@@ -49,8 +70,9 @@ export class ArticleController {
     return await this.articleService.update(slug, user.id, updateArticleDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.articleService.remove(+id);
+  @Delete(':slag')
+  @UseGuards(AuthGuard)
+  deleteBySlug(@Param('slag') slug: string, @UserDecorator() user: User) {
+    return this.articleService.deleteBySlag(slug, user.id);
   }
 }

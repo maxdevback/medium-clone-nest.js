@@ -1,0 +1,8 @@
+###
+GET http://localhost:3000/profile/username
+
+###
+POST http://localhost:3000/profile/username/follow
+
+###
+DELETE http://localhost:3000/profile/username/unfollow

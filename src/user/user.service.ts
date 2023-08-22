@@ -31,9 +31,11 @@ export class UserService {
     return await this.userRepo.save(newUser);
   }
   async login({ email, password }: LoginUserDto) {
-    const user = await this.userRepo.findOne({ where: { email } });
+    const user = await this.userRepo.findOne({
+      where: { email },
+      select: ['email', 'password', 'id', 'username'],
+    });
     if (!user) throw new NotFoundException('User with that email not found');
-    console.log(user, password);
     if (await comparePassword(password, user.password)) return user;
     throw new ConflictException('Password is wrong');
   }
@@ -45,5 +47,8 @@ export class UserService {
   }
   async findOne(options: FindOneOptions<User>) {
     return await this.userRepo.findOne(options);
+  }
+  async save(user: User) {
+    return await this.userRepo.save(user);
   }
 }

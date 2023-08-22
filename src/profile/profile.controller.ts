@@ -2,21 +2,41 @@ import {
   Controller,
   Get,
   Post,
-  Body,
-  Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
-// import { CreateProfileDto } from './dto/create-profile.dto';
-// import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserDecorator } from 'src/decorators/user.decorator';
+import { User } from 'src/user/entities/user.entity';
+import { AuthGuard } from 'src/guards/auth.guard';
 
 @Controller('profile')
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
-  // @Post()
-  // create(@Body() createProfileDto: CreateProfileDto) {
-  //   return this.profileService.create(createProfileDto);
-  // }
+  @Get(':username')
+  async getProfile(
+    @Param('username') username: string,
+    @UserDecorator() user: User | undefined,
+  ) {
+    return await this.profileService.getProfile(username, user.id);
+  }
+  @Post(':username/follow')
+  @UseGuards(AuthGuard)
+  async follow(
+    @Param('username') username: string,
+    @UserDecorator() user: User,
+  ) {
+    return await this.profileService.followUser(username, user.id);
+  }
+
+  @Delete(':username/unFollow')
+  @UseGuards(AuthGuard)
+  async unFollow(
+    @Param('username') username: string,
+    @UserDecorator() user: User,
+  ) {
+    return await this.profileService.unFollowUser(username, user.id);
+  }
 }
