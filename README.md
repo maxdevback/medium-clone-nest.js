@@ -1,6 +1,5 @@
 ## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+This project is a copy of medium on nest.js. Information about endpoints, installation, customization can be found here in readmy.md
 
 ## Installation
 
